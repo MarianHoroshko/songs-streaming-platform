@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+  </head>
+  <body>
+    <audio preload="true" id="player" controls crossorigin></audio>
+
+    <!-- Importing libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+
+    <script>
+      const audio = document.querySelector("#player");
+
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+
+        hls.loadSource(
+          "http://localhost:3000/song/1dcd85c4-59d9-4143-a8f6-cd2d14b453d9/outputlist.m3u8"
+        );
+
+        hls.attachMedia(audio);
+      }
+    </script>
+  </body>
+</html>

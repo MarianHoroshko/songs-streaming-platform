@@ -1,0 +1,9 @@
+# build files
+bin/
+
+# streamable songs files
+songs/
+static/
+
+# test files
+/test_files

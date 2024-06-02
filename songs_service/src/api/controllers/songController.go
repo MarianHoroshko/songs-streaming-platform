@@ -8,7 +8,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
+	"spotify_clone.com/songs_service/src/api/dto"
 	"spotify_clone.com/songs_service/src/api/models"
+	"spotify_clone.com/songs_service/src/api/repository"
 )
 
 // TODO: to .env file
@@ -16,11 +18,23 @@ const (
 	SONGS_PATH = "static/"
 )
 
-func AddNewSong(c *fiber.Ctx) error {
+type SongController interface {
+	AddNewSong(c *fiber.Ctx) error
+}
+
+type songController struct {
+	songRepository repository.SongRepository
+}
+
+func NewSongController(r repository.SongRepository) SongController {
+	return &songController{songRepository: r}
+}
+
+func (s *songController) AddNewSong(c *fiber.Ctx) error {
 	// TODO: add error res for ifs
 
 	// get song data
-	var reqBody = new(models.Song)
+	var reqBody = new(dto.SongDTO)
 	if err := c.BodyParser(reqBody); err != nil {
 		log.Fatal(err)
 
@@ -55,13 +69,22 @@ func AddNewSong(c *fiber.Ctx) error {
 	}
 	log.Println("[controllers:AddNewSong] Successfully converted user's file.")
 
+	// create song entity and set data
+	var songEntity models.Song
+	songEntity.ID = songId
+	songEntity.Title = reqBody.Title
+
 	// save song data in db
+	_, err = s.songRepository.Save(songEntity)
+	if err != nil {
+		log.Panic(err)
+
+		return err
+	}
 
 	// TODO: add response
 	// return song data
-	return c.Status(201).JSON(fiber.Map{
-		"song_id": songId,
-	})
+	return c.Status(201).JSON(songEntity)
 }
 
 func convertSongToStreamableFiles(songsByteData multipart.File) (string, error) {

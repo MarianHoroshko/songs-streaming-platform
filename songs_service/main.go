@@ -8,7 +8,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 
-	api "spotify_clone.com/songs_service/src/api"
+	"spotify_clone.com/songs_service/src/api"
+	"spotify_clone.com/songs_service/src/config"
 )
 
 // TODO: to .env file
@@ -18,12 +19,23 @@ const (
 )
 
 func main() {
-	// connect to consul
-
-	// connect to db
-
 	// create fiber app
 	app := fiber.New()
+	log.Println("[main:main] Fiber app successfully created.")
+
+	// connect to db
+	session, err := config.SetupDBConnection("127.0.0.1", "song_platform")
+	if err != nil {
+		log.Panic(err)
+
+		panic(err)
+	}
+	log.Println("[main:main] Connected to db successfully.")
+
+	// close db connection when program stops
+	defer session.Close()
+
+	// connect to consul
 
 	// middlewares
 	// allow cors
@@ -36,10 +48,13 @@ func main() {
 
 	// routes
 	// register routes
-	api.RegisterRoutes(app, BASE_PATH)
+	router := api.NewRouter(session)
+	router.RegisterRoutes(app, BASE_PATH)
 
 	// start server
 	if err := app.Listen(":3000"); err != nil {
 		log.Fatal(err)
+
+		panic(err)
 	}
 }

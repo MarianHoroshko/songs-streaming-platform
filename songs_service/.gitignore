@@ -10,3 +10,6 @@ static/
 
 # db data
 /out
+
+# enviroment variables
+.env

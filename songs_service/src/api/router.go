@@ -1,14 +1,31 @@
 package api
 
 import (
+	"github.com/gocql/gocql"
 	"github.com/gofiber/fiber/v2"
 
 	"spotify_clone.com/songs_service/src/api/controllers"
+	"spotify_clone.com/songs_service/src/api/repository"
 )
 
-func RegisterRoutes(app *fiber.App, base_path string) {
+type Router interface {
+	RegisterRoutes(app *fiber.App, base_path string)
+}
+
+type router struct {
+	songController controllers.SongController
+}
+
+func NewRouter(dbSession *gocql.Session) Router {
+	songRepository := repository.NewSongRepository(dbSession)
+	songController := controllers.NewSongController(songRepository)
+
+	return &router{songController: songController}
+}
+
+func (r *router) RegisterRoutes(app *fiber.App, base_path string) {
 	router := app.Group(base_path)
 
 	// upload new song
-	router.Post("/song/add", controllers.AddNewSong)
+	router.Post("/song/add", r.songController.AddNewSong)
 }

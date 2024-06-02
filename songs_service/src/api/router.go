@@ -2,12 +2,13 @@ package api
 
 import (
 	"github.com/gofiber/fiber/v2"
+
+	"spotify_clone.com/songs_service/src/api/controllers"
 )
 
 func RegisterRoutes(app *fiber.App, base_path string) {
-	var router = app.Group(base_path)
+	router := app.Group(base_path)
 
-	router.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("test")
-	})
+	// upload new song
+	router.Post("/song/add", controllers.AddNewSong)
 }

@@ -7,3 +7,6 @@ static/
 
 # test files
 /test_files
+
+# db data
+/out

@@ -11,6 +11,7 @@ import (
 	api "spotify_clone.com/songs_service/src/api"
 )
 
+// TODO: to .env file
 const (
 	BASE_PATH  = "/api/v1"
 	SONGS_PATH = "static/"

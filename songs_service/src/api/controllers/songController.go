@@ -1,42 +1,79 @@
 package controllers
 
 import (
-	"fmt"
 	"log"
+	"mime/multipart"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
+	"spotify_clone.com/songs_service/src/api/models"
 )
 
+// TODO: to .env file
 const (
 	SONGS_PATH = "static/"
 )
 
 func AddNewSong(c *fiber.Ctx) error {
+	// TODO: add error res for ifs
+
 	// get song data
+	var reqBody = new(models.Song)
+	if err := c.BodyParser(reqBody); err != nil {
+		log.Fatal(err)
 
-	// get song file from artist
-
-	// covert to streamable file
-	if err := convertSongToStreamableFiles(); err != nil {
 		return err
 	}
+	log.Println("[controllers:AddNewSong] Request body parsed successfully.")
+
+	// get song file
+	songFile, err := c.FormFile("song_file")
+	if err != nil {
+		log.Fatal(err)
+
+		return err
+	}
+	log.Println("[controllers:AddNewSong] Got file form form data.")
+
+	// get song content as bytes
+	fileContent, err := songFile.Open()
+	if err != nil {
+		log.Fatal(err)
+
+		return err
+	}
+	log.Println("[controllers:AddNewSong] Got file content.")
+
+	// covert to streamable file
+	songId, err := convertSongToStreamableFiles(fileContent)
+	if err != nil {
+		log.Fatal(err)
+
+		return err
+	}
+	log.Println("[controllers:AddNewSong] Successfully converted user's file.")
 
 	// save song data in db
 
+	// TODO: add response
 	// return song data
-	return c.Status(201).SendString("data")
+	return c.Status(201).JSON(fiber.Map{
+		"song_id": songId,
+	})
 }
 
-func convertSongToStreamableFiles() error {
+func convertSongToStreamableFiles(songsByteData multipart.File) (string, error) {
 	uuid_as_string := uuid.New().String()
-	fmt.Println("uuid: " + uuid_as_string)
 
-	createNewDirForSongStreamableFiles(uuid_as_string)
+	if err := createNewDirForSongStreamableFiles(uuid_as_string); err != nil {
+		log.Fatal(err)
 
-	var file_input = ffmpeg.Input("test_files/test.mp3")
+		return "", err
+	}
+
+	var file_input = ffmpeg.Input("pipe:0").WithInput(songsByteData)
 
 	var file_output = file_input.Output(SONGS_PATH+uuid_as_string+"/output%03d.ts",
 		ffmpeg.KwArgs{
@@ -49,27 +86,24 @@ func convertSongToStreamableFiles() error {
 			"segment_format": "mpegts",
 		})
 
-	var err = file_output.Run()
+	if err := file_output.Run(); err != nil {
+		log.Fatal(err)
 
-	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return uuid_as_string, nil
 }
 
-func createNewDirForSongStreamableFiles(uuid string) {
-	fmt.Println("path: " + SONGS_PATH + uuid)
-
+func createNewDirForSongStreamableFiles(uuid string) error {
 	if _, err := os.Stat(SONGS_PATH + uuid); os.IsNotExist(err) {
-		// path is a directory
-
-		fmt.Println("Path not exists.")
 
 		if err := os.MkdirAll(SONGS_PATH+uuid, os.ModePerm); err != nil {
 			log.Fatal(err)
 
-			return
+			return err
 		}
 	}
+
+	return nil
 }

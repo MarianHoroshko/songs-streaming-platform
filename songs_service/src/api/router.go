@@ -17,6 +17,8 @@ type router struct {
 }
 
 func NewRouter(dbSession *gocql.Session) Router {
+	// create repository and controller
+	// inject repository to controller
 	songRepository := repository.NewSongRepository(dbSession)
 	songController := controllers.NewSongController(songRepository)
 

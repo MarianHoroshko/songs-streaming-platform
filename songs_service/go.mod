@@ -14,6 +14,7 @@ require (
 	github.com/gorilla/schema v1.1.0 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

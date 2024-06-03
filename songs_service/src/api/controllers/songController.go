@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
+
 	"spotify_clone.com/songs_service/src/api/dto"
 	"spotify_clone.com/songs_service/src/api/models"
 	"spotify_clone.com/songs_service/src/api/repository"
@@ -31,14 +32,15 @@ func NewSongController(r repository.SongRepository) SongController {
 }
 
 func (s *songController) AddNewSong(c *fiber.Ctx) error {
-	// TODO: add error res for ifs
-
 	// get song data
 	var reqBody = new(dto.SongDTO)
 	if err := c.BodyParser(reqBody); err != nil {
 		log.Fatal(err)
 
-		return err
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": err.Error(),
+		})
 	}
 	log.Println("[controllers:AddNewSong] Request body parsed successfully.")
 
@@ -47,7 +49,10 @@ func (s *songController) AddNewSong(c *fiber.Ctx) error {
 	if err != nil {
 		log.Fatal(err)
 
-		return err
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  fiber.ErrBadRequest,
+			"message": err.Error(),
+		})
 	}
 	log.Println("[controllers:AddNewSong] Got file form form data.")
 
@@ -56,7 +61,10 @@ func (s *songController) AddNewSong(c *fiber.Ctx) error {
 	if err != nil {
 		log.Fatal(err)
 
-		return err
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  fiber.ErrBadRequest,
+			"message": err.Error(),
+		})
 	}
 	log.Println("[controllers:AddNewSong] Got file content.")
 
@@ -65,7 +73,10 @@ func (s *songController) AddNewSong(c *fiber.Ctx) error {
 	if err != nil {
 		log.Fatal(err)
 
-		return err
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  fiber.ErrBadRequest,
+			"message": err.Error(),
+		})
 	}
 	log.Println("[controllers:AddNewSong] Successfully converted user's file.")
 
@@ -79,12 +90,15 @@ func (s *songController) AddNewSong(c *fiber.Ctx) error {
 	if err != nil {
 		log.Panic(err)
 
-		return err
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  fiber.ErrBadRequest,
+			"message": err.Error(),
+		})
 	}
 
 	// TODO: add response
 	// return song data
-	return c.Status(201).JSON(songEntity)
+	return c.Status(fiber.StatusCreated).JSON(songEntity)
 }
 
 func convertSongToStreamableFiles(songsByteData multipart.File) (string, error) {

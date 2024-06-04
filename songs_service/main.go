@@ -27,7 +27,7 @@ func main() {
 
 		panic(err)
 	}
-	log.Println("Successfully loaded environment variables file.")
+	log.Println("[main:main] Successfully loaded environment variables file.")
 
 	// create fiber app
 	app := fiber.New()
@@ -48,6 +48,12 @@ func main() {
 	defer session.Close()
 
 	// connect to consul
+	config.SetupConsulConnection()
+
+	// route for Consul health check
+	app.Get("/check", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
 
 	// middlewares
 	// allow cors
@@ -70,6 +76,7 @@ func main() {
 	log.Println("[main:main] Router created and registered routes successfully.")
 
 	// start server
+	// TODO: get post from variables
 	if err := app.Listen(":3000"); err != nil {
 		log.Fatal(err)
 

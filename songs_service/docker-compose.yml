@@ -26,3 +26,9 @@ services:
         interval: 15s
         timeout: 10s
         retries: 10
+  consul:
+    image: consul:1.15.4
+    container_name: consul
+    command: agent -server -bootstrap-expect 1 -ui -bind 0.0.0.0 -advertise=192.168.0.100 -client 0.0.0.0
+    ports:
+      - 8500:8500

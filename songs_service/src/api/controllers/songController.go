@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 
-	"spotify_clone.com/songs_service/src/api/dto"
 	"spotify_clone.com/songs_service/src/api/models"
 	"spotify_clone.com/songs_service/src/api/repository"
 )
@@ -19,22 +18,18 @@ const (
 	SONGS_PATH = "static/"
 )
 
-type SongController interface {
-	AddNewSong(c *fiber.Ctx) error
+type SongController struct {
+	songRepository *repository.SongRepository
 }
 
-type songController struct {
-	songRepository repository.SongRepository
+func NewSongController(r *repository.SongRepository) *SongController {
+	return &SongController{songRepository: r}
 }
 
-func NewSongController(r repository.SongRepository) SongController {
-	return &songController{songRepository: r}
-}
-
-func (s *songController) AddNewSong(c *fiber.Ctx) error {
-	// get song data
-	var reqBody = new(dto.SongDTO)
-	if err := c.BodyParser(reqBody); err != nil {
+func (s *SongController) AddNewSong(c *fiber.Ctx) error {
+	// get data form multiform
+	form, err := c.MultipartForm()
+	if err != nil {
 		log.Fatal(err)
 
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -42,19 +37,31 @@ func (s *songController) AddNewSong(c *fiber.Ctx) error {
 			"message": err.Error(),
 		})
 	}
-	log.Println("[controllers:AddNewSong] Request body parsed successfully.")
 
-	// get song file
-	songFile, err := c.FormFile("song_file")
-	if err != nil {
+	// get song title
+	titleValues := form.Value["title"]
+	if len(titleValues) == 0 {
 		log.Fatal(err)
 
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"status":  fiber.ErrBadRequest,
-			"message": err.Error(),
+			"status":  fiber.StatusBadRequest,
+			"message": "Empty title data.",
 		})
 	}
-	log.Println("[controllers:AddNewSong] Got file form form data.")
+	songTitle := form.Value["title"][0]
+	log.Println("[controllers:AddNewSong] Got song title successfully.")
+
+	files := form.File["song_file"]
+	if len(files) == 0 {
+		log.Fatal(err)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  fiber.StatusBadRequest,
+			"message": "Got no song files.",
+		})
+	}
+	songFile := form.File["song_file"][0]
+	log.Println("[controllers:AddNewSong] Got song file successfully.")
 
 	// get song content as bytes
 	fileContent, err := songFile.Open()
@@ -83,7 +90,7 @@ func (s *songController) AddNewSong(c *fiber.Ctx) error {
 	// create song entity and set data
 	var songEntity models.Song
 	songEntity.ID = songId
-	songEntity.Title = reqBody.Title
+	songEntity.Title = songTitle
 
 	// save song data in db
 	_, err = s.songRepository.Save(songEntity)

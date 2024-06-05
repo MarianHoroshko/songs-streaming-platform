@@ -18,7 +18,7 @@ func SetupConsulConnection() error {
 
 	// TODO: get data from .env file
 	serviceId := "go-server4321"
-	serviceName := "SongService"
+	serviceName := "songs-service"
 	port := 3000
 	address := "127.0.0.1"
 	dockerAddress := "host.docker.internal"

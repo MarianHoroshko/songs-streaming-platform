@@ -14,6 +14,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -47,7 +48,7 @@ public class AuthService {
 
     public AuthResponse singInUser(SignInDto signInDto, HttpServletResponse response) {
         try {
-            log.info("[AuthService:singInUser] User Authentication Started with ::: {}", signInDto);
+            log.info("[AuthService:singInUser] User Authentication Started with ::: {}", signInDto.getUsername());
 
             UserEntity user = userRepository.findByUsername(signInDto.getUsername())
                     .orElseThrow(() -> {
@@ -73,22 +74,22 @@ public class AuthService {
         try {
             UserEntity userInfoEntity = userRepository.findByUsername(authentication.getName())
                     .orElseThrow(() -> {
-                        log.error("[AuthService:userSignInAuth] User :{} not found", authentication.getName());
+                        log.error("[AuthService:getJWTTokensAfterAuth] User :{} not found", authentication.getName());
                         return new ResponseStatusException(HttpStatus.NOT_FOUND, "USER NOT FOUND ");
                     });
 
 
             String accessToken = jwtTokenGenerator.generateAccessToken(authentication);
-            log.info("[AuthService:userSignInAuth] Access token for user: {}, has been generated", userInfoEntity.getUsername());
+            log.info("[AuthService:getJWTTokensAfterAuth] Access token for user: {}, has been generated", userInfoEntity.getUsername());
 
             String refreshToken = jwtTokenGenerator.generateRefreshToken(authentication);
-            log.info("[AuthService:userSignInAuth] Refresh token for user: {}, has been generated", userInfoEntity.getUsername());
+            log.info("[AuthService:getJWTTokensAfterAuth] Refresh token for user: {}, has been generated", userInfoEntity.getUsername());
 
             saveUserRefreshToken(userInfoEntity, refreshToken);
-            log.info("[AuthService:userSignInAuth] Refresh token for user: {}, has been saved", userInfoEntity.getUsername());
+            log.info("[AuthService:getJWTTokensAfterAuth] Refresh token for user: {}, has been saved", userInfoEntity.getUsername());
 
             createRefreshTokenCookie(response, refreshToken);
-            log.info("[AuthService:userSignInAuth] Refresh token for user: {}, has been added to cookies", userInfoEntity.getUsername());
+            log.info("[AuthService:getJWTTokensAfterAuth] Refresh token for user: {}, has been added to cookies", userInfoEntity.getUsername());
 
             return AuthResponse
                     .builder()
@@ -97,7 +98,7 @@ public class AuthService {
                     .username(userInfoEntity.getUsername())
                     .tokenType(TokenType.Bearer).build();
         } catch (Exception e) {
-            log.error("[AuthService:userSignInAuth]Exception while authenticating the user due to :" + e.getMessage());
+            log.error("[AuthService:getJWTTokensAfterAuth] Exception while authenticating the user due to :" + e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Please Try Again.");
         }
     }
@@ -107,7 +108,6 @@ public class AuthService {
 
         // check is refreshToken saved in db and not revoked
         RefreshTokenEntity refreshTokenEntity = refreshTokenRepository.findByRefreshToken(refreshToken)
-
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Refresh token revoked"));
 
         if (refreshTokenEntity.isRevoked()) {
@@ -124,7 +124,7 @@ public class AuthService {
         Authentication authentication = createAuthentication(user);
 
         String accessToken = jwtTokenGenerator.generateAccessToken(authentication);
-        log.info("[AuthService:userSignInAuth] Access token for user: {}, has been generated", user.getUsername());
+        log.info("[AuthService:getAccessTokenUsingRefreshToken] Access token for user: {}, has been generated", user.getUsername());
 
         return AuthResponse.builder().accessToken(accessToken).accessTokenExpiry(15 * 60).username(user.getUsername()).tokenType(TokenType.Bearer).build();
     }
@@ -135,7 +135,7 @@ public class AuthService {
 
             Optional<UserEntity> user = userRepository.findByUsername(signUpDto.getUsername());
             if (user.isPresent()) {
-                throw new Exception("User Already Exist");
+                throw new BadRequestException("User Already Exist");
             }
 
             UserEntity userDetailsEntity = userEntityMapper.convertToUserEntity(signUpDto);

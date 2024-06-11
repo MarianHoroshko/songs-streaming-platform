@@ -1,21 +1,17 @@
 package com.auth.demo.repository;
 
 import com.auth.demo.entity.UserEntity;
-import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.cql.Row;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.cassandra.core.CassandraOperations;
-import org.springframework.data.cassandra.core.CassandraTemplate;
 import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.data.cassandra.core.cql.IncorrectResultSetColumnCountException;
 import org.springframework.data.cassandra.core.cql.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -33,7 +29,7 @@ public class UserRepository {
 
         try {
             user = Optional.ofNullable(
-                    cqlTemplate.queryForObject("SELECT * FROM users WHERE username = ?",
+                    cqlTemplate.queryForObject("SELECT * FROM users WHERE username = ? ALLOW FILTERING",
                             new RowMapper<UserEntity>() {
                                 @Override
                                 public UserEntity mapRow(Row row, int rowNum) throws DriverException {
@@ -54,7 +50,7 @@ public class UserRepository {
 
             return Optional.ofNullable(null);
         } catch (DataAccessException exception) {
-            log.error("[UserRepository:findByUsername] Data access error.");
+            log.error("[UserRepository:findByUsername] Data access error: " + exception.getMessage());
 
             return Optional.ofNullable(null);
         }
@@ -85,7 +81,7 @@ public class UserRepository {
                     user.getCreatedAt(),
                     user.getUpdatedAt());
         } catch (DataAccessException exception) {
-            log.error("[UserRepository:insert] Data access error.");
+            log.error("[UserRepository:insert] Data access error: " + exception.getMessage());
 
             throw new RuntimeException(exception.getMessage());
         }

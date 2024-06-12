@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	"github.com/joho/godotenv"
 
 	"spotify_clone.com/songs_service/src/api"
@@ -50,16 +51,15 @@ func main() {
 	// connect to consul
 	config.SetupConsulConnection()
 
-	// route for Consul health check
-	app.Get("/check", func(c *fiber.Ctx) error {
-		return c.SendStatus(fiber.StatusOK)
-	})
+	// health check for Consul discovery server
+	app.Use(healthcheck.New())
 
 	// middlewares
 	// allow cors
 	// only on dev
 	if mode := utils.GetEnvVariable("PROJECT_MODE", "dev"); mode == "dev" {
 		app.Use(cors.New())
+
 		log.Println("[main:main] Allowed cors.")
 	}
 

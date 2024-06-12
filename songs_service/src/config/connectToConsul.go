@@ -29,7 +29,7 @@ func SetupConsulConnection() error {
 		Port:    port,
 		Address: address,
 		Check: &capi.AgentServiceCheck{
-			HTTP:     fmt.Sprintf("http://%v:%v/check", dockerAddress, port),
+			HTTP:     fmt.Sprintf("http://%v:%v/livez", dockerAddress, port),
 			Interval: "10s",
 			Timeout:  "30s",
 		},
@@ -39,12 +39,12 @@ func SetupConsulConnection() error {
 	if err != nil {
 		log.Panic(err)
 
-		log.Printf("[config:SetupConsulConnection] Failed to register service: %s:%v ", address, port)
+		log.Printf("[config:SetupConsulConnection] Failed to register service: %s: %s", serviceId, serviceName)
 
 		return err
 	}
 
-	log.Printf("[config:SetupConsulConnection] Successfully register Consul service: %s:%v", address, port)
+	log.Printf("[config:SetupConsulConnection] Successfully register Consul service: %s: %s", serviceId, serviceName)
 
 	return nil
 }

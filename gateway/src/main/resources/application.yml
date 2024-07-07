@@ -12,7 +12,11 @@ spring:
         - id: songs-service
           uri: lb://songs-service
           predicates:
-            - Path=/api/v1/**
+            - Path=/api/v1/songs/**
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/auth/**
     consul:
       config:
         enabled: false
